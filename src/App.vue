@@ -99,7 +99,7 @@ onMounted(() => {
 
 .navbar {
   position: fixed;
-  top: 10vh;
+  top: 25vh;
   left: 0;
   right: 0;
   margin-inline: auto; /* 不用 transform 居中：避免玻璃画布定位漂移 */
