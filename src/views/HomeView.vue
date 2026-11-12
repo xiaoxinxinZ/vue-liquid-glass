@@ -1,8 +1,18 @@
 <script setup>
+import { ref } from 'vue'
+import { DEFAULT_MATERIAL_V2 } from 'apple-liquid-glass-webgl'
 import { GlassButton, GlassSwitch, GlassSurface } from '../components/glass'
-import { useGlassStore } from '../stores/glass'
 
-const store = useGlassStore()
+// 组件展示页用的玻璃选项（本地常量，不依赖 store）：
+// 导航的实际控制参数都在 myTabbar.vue，这里只是给 GlassButton/GlassSwitch/
+// GlassSurface 这几个演示组件一个可用的材质 + 折射源。
+const glassOptions = {
+  material: { ...DEFAULT_MATERIAL_V2 },
+  backdrop: { source: '#bg', anchor: 'viewport', fit: 'cover' },
+}
+
+// 开关状态（本地）
+const switchOn = ref(false)
 </script>
 
 <template>
@@ -16,17 +26,17 @@ const store = useGlassStore()
     <!-- 第一排：可交互的三个 -->
     <div class="row">
       <div class="cell">
-        <GlassButton class="bloom" bloom :options="store.glassOptions">Hold to bloom</GlassButton>
+        <GlassButton class="bloom" bloom :options="glassOptions">Hold to bloom</GlassButton>
         <span class="label">GlassButton · bloom</span>
       </div>
 
       <div class="cell">
-        <GlassSwitch v-model="store.switchOn" class="switch" :options="store.glassOptions" />
-        <span class="label">GlassSwitch · {{ store.switchOn ? 'ON' : 'OFF' }}</span>
+        <GlassSwitch v-model="switchOn" class="switch" :options="glassOptions" />
+        <span class="label">GlassSwitch · {{ switchOn ? 'ON' : 'OFF' }}</span>
       </div>
 
       <div class="cell">
-        <GlassButton class="plus" :options="store.glassOptions" aria-label="添加">
+        <GlassButton class="plus" :options="glassOptions" aria-label="添加">
           <svg viewBox="0 0 24 24" width="42%" height="42%">
             <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none" />
           </svg>
@@ -38,30 +48,13 @@ const store = useGlassStore()
     <!-- 第二排：纯玻璃，里面什么都没有 -->
     <div class="row">
       <div class="cell">
-        <GlassSurface class="panel" :options="store.glassOptions" />
+        <GlassSurface class="panel" :options="glassOptions" />
         <span class="label">GlassSurface · 空玻璃 220×130</span>
       </div>
 
       <div class="cell">
-        <GlassSurface class="disc" :options="store.glassOptions" />
+        <GlassSurface class="disc" :options="glassOptions" />
         <span class="label">GlassSurface · 空玻璃圆</span>
-      </div>
-    </div>
-
-    <!-- 导航的 frost 旋钮：0 清澈透明，1 重度磨砂 -->
-    <div class="controls">
-      <div class="frost">
-        <span class="frost-name">导航柔滑比例 · frost</span>
-        <input
-          class="frost-range"
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
-          :value="store.navFrost"
-          @input="store.navFrost = Number($event.target.value)"
-        />
-        <span class="frost-val">{{ store.navFrost.toFixed(2) }}</span>
       </div>
     </div>
 

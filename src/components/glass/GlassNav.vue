@@ -42,14 +42,18 @@ const props = defineProps({
   activeColor: { type: String, default: '#0a84ff' },
   /** 0~1，导航整体柔滑比例：0 = 清澈透明（折射锐利，几乎看不见玻璃本体），1 = 重度磨砂奶白 */
   frost: { type: Number, default: 0.58 },
+  /**
+   * 单个 tab 的目标宽度（px）。组件据此自动算出导航总宽 = 单格宽 × tab 数 + 左右内边距，
+   * 做到「几个 tab 撑多宽」。所以使用方通常不需要再给导航设宽度。
+   */
+  segWidth: { type: Number, default: 84 },
+  /** 导航高度（px）。默认 60，图标 + 文字上下排列需要一定高度 */
+  height: { type: Number, default: 60 },
 })
-const emit = defineEmits(['update:modelValue', 'change', 'click', 'seg-target'])
+const emit = defineEmits(['update:modelValue', 'change', 'click'])
 
 /* ---------------- 常量：想调手感改这里 ---------------- */
 const PAD = 4 // 文字层相对导航的内边距
-// 单个 tab 的目标宽度（px）：把 SegW 收敛到一个固定值，而不是随导航被撑得多宽。
-// 文字标签较长的格子（Discover/Profile）也按这个宽度排，塞不下的部分省略号截断。
-const SEG_TARGET = 104
 // 按压/拖动时：胶囊横向撑开 + 纵向长高，形成"凸起的清澈透镜"
 const GROW_W = 1.12 // 按压时胶囊宽度倍数（横向撑开，仍以格子中心为轴）
 const GROW_H = 1.15 // 按压时胶囊高度倍数
@@ -146,8 +150,6 @@ function indexFromSlot() {
 }
 
 onMounted(() => {
-  // 把"目标单格宽"抛给父级，父级据此撑导航宽度（几个 tab 撑多宽）
-  emit('seg-target', SEG_TARGET)
   measure()
   nextTick(measure)
   ro = new ResizeObserver(measure)
@@ -271,6 +273,18 @@ const normalIcon = (item) => item.normalImg || item.activeImg
 const activeIcon = (item) => item.activeImg || item.normalImg
 
 /* ---------------- 材质 ---------------- */
+// 玻璃材质的默认底子：官方默认参数。轨道的 frost/tint 由组件内部按 frost prop
+// 实时推导，使用方通常只需传 frost，不用关心 material 细节。
+function baseMaterial() {
+  return props.options.material || {}
+}
+
+// 折射源默认就是固定背景图 #bg（本 demo 的玻璃折射的就是那张图）。
+// 按压时追加 'auto' 让图标文字也进折射源。
+function baseBackdrop() {
+  return props.options.backdrop ?? { source: '#bg', anchor: 'viewport', fit: 'cover' }
+}
+
 // frost 一个旋钮同时给材质两件事：
 //   frost → 折射前的预模糊半径（0 清澈锐利，1 重度雾化）
 //   tint  → 白色涂层不透明度（跟着一起长，否则低 frost 时会被 tint 糊成一块灰白）
@@ -281,7 +295,7 @@ const frostValue = computed(() => {
 })
 
 const trackOptions = computed(() => {
-  const base = props.options.material || {}
+  const base = baseMaterial()
   // 按住/拖动时把导轨自己的材质拉满磨砂（frost = 1），白度由玻璃材质产生，
   // 不再额外叠任何 CSS 白层。tint 比滑杆公式略低，避免磨砂一开就死白。
   const on = pressed.value || dragging.value
@@ -301,8 +315,8 @@ const pillAlpha = computed(() => 0.28 + 0.44 * frostValue.value)
 // 方式（换成 '#元素' 只会画那个元素的 CSS 背景，layerFromElement 不画文字，
 // 滑块里就会空成一片）。代价是导轨玻璃也会被采集进去，所以导轨的磨砂要克制。
 const glassOptions = computed(() => {
-  const base = props.options.material || {}
-  const background = props.options.backdrop ?? '#bg'
+  const base = baseMaterial()
+  const background = baseBackdrop()
   return {
     ...props.options,
     backdrop: pressed.value ? [background, 'auto'] : background,
@@ -326,6 +340,9 @@ const pill = computed(() => {
 })
 
 const rootStyle = computed(() => ({
+  // 导航总宽 = 单格宽 × tab 数 + 左右内边距（内聚在组件里，使用方无需算宽度）
+  width: `${props.items.length * props.segWidth + PAD * 2}px`,
+  height: `${props.height}px`,
   '--nav-fg': props.color,
   '--nav-active-fg': props.activeColor,
   '--pill-a': pillAlpha.value,
