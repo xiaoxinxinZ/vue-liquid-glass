@@ -1,0 +1,39 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  font-family:
+    'PingFang SC',
+    'Helvetica Neue',
+    Helvetica,
+    Arial,
+    sans-serif;
+  color: #1d1d1f;
+  /* 背景交给固定 <img id="bg">；这里保持透明，
+     否则 glass 的 backdrop: 'auto' 会把这层底色刷到折射源最上面，把照片盖掉 */
+  background: transparent;
+}
+
+a {
+  color: inherit;
+}
+
+/* 滑块 */
+input[type='range'] {
+  width: 100%;
+  accent-color: #0a84ff;
+}
+
+select {
+  font: inherit;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid #d2d2d7;
+  background: #fff;
+  color: #1d1d1f;
+}
