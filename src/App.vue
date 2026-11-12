@@ -1,39 +1,16 @@
 <script setup>
-import { onMounted } from 'vue'
-import { RouterView } from 'vue-router'
-import { LiquidGlass } from 'apple-liquid-glass-webgl'
 import MyTabbar from './views/myTabbar.vue'
-
-// 背景图加载完后刷新一次玻璃，避免首帧折射到空白
-onMounted(() => {
-  const bg = document.getElementById('bg')
-  if (bg?.complete) {
-    LiquidGlass.refreshAll()
-  } else {
-    bg?.addEventListener('load', () => LiquidGlass.refreshAll(), { once: true })
-  }
-})
+import LandingPage from './views/LandingPage.vue'
+import MyLiquidBox from './views/myLiquidBox.vue'
 </script>
 
 <template>
-  <!-- 固定背景图：一张图，不切换；玻璃的折射源就是它 -->
-  <img id="bg" class="bg" src="/earth.png" alt="" aria-hidden="true" />
+  <!-- 假数据官网（超过一屏，可滚动），内容真实，验证导航折射任意划过内容的效果 -->
+  <LandingPage />
 
-  <!-- 封装的液态玻璃导航（参数都写在 myTabbar.vue 里） -->
+  <!-- 空玻璃容器示例（GlassBox）：点击有弹簧缩放、里面放各种内容 -->
+  <MyLiquidBox />
+
+  <!-- 固定的液态玻璃导航：浮在官网内容之上，按住/滚动时折射下方真实元素 -->
   <MyTabbar />
-
-  <RouterView />
 </template>
-
-<style scoped>
-.bg {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  z-index: 0;
-  pointer-events: none;
-  user-select: none;
-}
-</style>

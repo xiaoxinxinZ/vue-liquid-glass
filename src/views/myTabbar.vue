@@ -48,24 +48,32 @@ function onNavChange(item, value, index) {
 </script>
 
 <template>
-  <GlassNav
-    v-model="tab"
-    class="navbar"
-    :items="navItems"
-    :frost="frost"
-    @click="onNavClick"
-    @change="onNavChange"
-  />
+  <!-- 外层 wrapper 负责 fixed 定位（不能把 position:fixed 直接加到 GlassNav 根上：
+       会给 <nav> 覆盖掉组件内部的 position:relative，玻璃画布定位就会错乱 -->
+  <div class="navbar-wrap">
+    <GlassNav
+      v-model="tab"
+      :items="navItems"
+      :frost="frost"
+      @click="onNavClick"
+      @change="onNavChange"
+    />
+  </div>
 </template>
 
 <style scoped>
-/* 定位交给使用方：位置、层级；宽高不用管——导航宽度由 tab 数量 + 单格宽自动算出 */
-.navbar {
+/* 定位交给使用方：这里用外层 wrapper 做 fixed 定位和居中，避免干扰玻璃画布 */
+.navbar-wrap {
   position: fixed;
   top: 25vh;
   left: 0;
   right: 0;
-  margin-inline: auto; /* 不用 transform 居中：避免玻璃画布定位漂移 */
+  display: flex;
+  justify-content: center; /* 居中：不用 transform，避免玻璃画布定位漂移 */
   z-index: 10;
+  pointer-events: none; /* 让点击穿透到内部导航，导航自带交互 */
+}
+.navbar-wrap :deep(.glass-nav) {
+  pointer-events: auto;
 }
 </style>

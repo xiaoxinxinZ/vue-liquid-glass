@@ -14,9 +14,8 @@ body {
     Arial,
     sans-serif;
   color: #1d1d1f;
-  /* 背景交给固定 <img id="bg">；这里保持透明，
-     否则 glass 的 backdrop: 'auto' 会把这层底色刷到折射源最上面，把照片盖掉 */
-  background: transparent;
+  /* 官网页面自带浅色底（LandingPage .page），这里给一个兜底色，避免元素外露白 */
+  background: #f6f7fb;
 }
 
 a {

@@ -279,10 +279,12 @@ function baseMaterial() {
   return props.options.material || {}
 }
 
-// 折射源默认就是固定背景图 #bg（本 demo 的玻璃折射的就是那张图）。
-// 按压时追加 'auto' 让图标文字也进折射源。
+// 折射源默认就是 'auto'（整页重绘）：把玻璃下方划过的所有真实页面元素
+// （文字、图片、渐变块、卡片……）都画进折射源，实现「任意内容划过都被折射」。
+// 如果你希望把某张固定背景图也始终纳入折射，可通过 options.backdrop 传
+// { source: '#xxx', anchor: 'viewport', fit: 'cover' }。
 function baseBackdrop() {
-  return props.options.backdrop ?? { source: '#bg', anchor: 'viewport', fit: 'cover' }
+  return props.options.backdrop ?? 'auto'
 }
 
 // frost 一个旋钮同时给材质两件事：
@@ -317,9 +319,10 @@ const pillAlpha = computed(() => 0.28 + 0.44 * frostValue.value)
 const glassOptions = computed(() => {
   const base = baseMaterial()
   const background = baseBackdrop()
+  // 按压时统一用 'auto'（整页重绘，含玻璃下方所有真实元素）；静止时用显式源（默认也是 auto）
   return {
     ...props.options,
-    backdrop: pressed.value ? [background, 'auto'] : background,
+    backdrop: pressed.value ? 'auto' : background,
     material: { ...base, ...PRESSED_MATERIAL },
   }
 })
