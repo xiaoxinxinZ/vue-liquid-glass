@@ -43,10 +43,13 @@ const props = defineProps({
   /** 0~1，导航整体柔滑比例：0 = 清澈透明（折射锐利，几乎看不见玻璃本体），1 = 重度磨砂奶白 */
   frost: { type: Number, default: 0.58 },
 })
-const emit = defineEmits(['update:modelValue', 'change', 'click'])
+const emit = defineEmits(['update:modelValue', 'change', 'click', 'seg-target'])
 
 /* ---------------- 常量：想调手感改这里 ---------------- */
 const PAD = 4 // 文字层相对导航的内边距
+// 单个 tab 的目标宽度（px）：把 SegW 收敛到一个固定值，而不是随导航被撑得多宽。
+// 文字标签较长的格子（Discover/Profile）也按这个宽度排，塞不下的部分省略号截断。
+const SEG_TARGET = 104
 // 按压/拖动时：胶囊横向撑开 + 纵向长高，形成"凸起的清澈透镜"
 const GROW_W = 1.12 // 按压时胶囊宽度倍数（横向撑开，仍以格子中心为轴）
 const GROW_H = 1.15 // 按压时胶囊高度倍数
@@ -143,6 +146,8 @@ function indexFromSlot() {
 }
 
 onMounted(() => {
+  // 把"目标单格宽"抛给父级，父级据此撑导航宽度（几个 tab 撑多宽）
+  emit('seg-target', SEG_TARGET)
   measure()
   nextTick(measure)
   ro = new ResizeObserver(measure)
@@ -451,8 +456,10 @@ const baseClipRight = computed(() => {
   transform-origin: center center;
   will-change: transform;
   /* 按压/拖动时整体"变长变矮"的弹簧形变，松手弹回。
-     库用 screenWidth/offsetWidth 做 scale 补偿（dom.js），所以画布不会错位。 */
-  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+     库用 screenWidth/offsetWidth 做 scale 补偿（dom.js），所以画布不会错位。
+     只在 transform 上过渡，绝不给 width/height 加过渡：inline 宽度每次变化
+     都会触发一轮动画，与这里抢合成层，弹簧就僵硬了。 */
+  transition: transform 0.46s cubic-bezier(0.34, 1.6, 0.64, 1);
 }
 .glass-nav.pressed {
   transform: scale(var(--press-sx), var(--press-sy));
