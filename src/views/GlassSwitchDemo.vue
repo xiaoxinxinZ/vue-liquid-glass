@@ -1,46 +1,37 @@
 <script setup>
 /**
- * SwitchPanel —— 磨砂白开关面板
+ * GlassSwitchDemo —— 磨砂白开关面板
  *
- * 几行 GlassSwitch，演示 size 三档 + v-model / defaultValue / change 事件。
+ * 演示 GlassSwitch：v-model（0/1）+ color + size + change + disabled。
+ * v-model 绑数字时，change 回调里的 v 就是变化后的 0/1。
  */
 import { ref } from 'vue'
 import GlassSwitch from '../components/glass/GlassSwitch.vue'
 
-// 开关状态（本地演示用）
-const notifyOn = ref(true) // v-model 绑定，默认打开
-const darkOn = ref(false) // 自定义颜色（蓝）
-const lastEvent = ref('') // change 事件回显
-
-// change 事件（source: click / drag / key）
-function onChange(value, meta) {
-  lastEvent.value = `${value ? '开' : '关'} · ${meta.source}`
-}
+// 三个开关状态（0 / 1），v-model 自动双向
+const miniOn = ref(1)      // 默认蓝色，初始开
+const normalOn = ref(0)    // 绿色预设
+const largeOn = ref(0)     // 自定义橙
+const disabledOn = ref(1)  // 禁用示例，固定开
 </script>
 
 <template>
   <div class="switch-panel">
     <div class="switch-row">
-      <GlassSwitch v-model="notifyOn" size="mini" class="demo-switch" @change="onChange" />
-      <span class="switch-label">迷你 · size="mini"</span>
+      <GlassSwitch v-model="miniOn" size="mini" @change="(v) => console.log(v)" />
+      <span class="switch-label">mini · 默认蓝</span>
     </div>
     <div class="switch-row">
-      <GlassSwitch v-model="darkOn" class="demo-switch" color="#0a84ff" @change="onChange" />
-      <span class="switch-label">正常 · 默认尺寸</span>
+      <GlassSwitch v-model="normalOn" color="green" @change="(v) => console.log(v)" />
+      <span class="switch-label">normal · green</span>
     </div>
     <div class="switch-row">
-      <GlassSwitch
-        size="large"
-        class="demo-switch"
-        color="#ff9f0a"
-        :default-value="true"
-        @change="onChange"
-      />
-      <span class="switch-label">大 · size="large"</span>
+      <GlassSwitch v-model="largeOn" size="large" color="#ff9f0a" @change="(v) => console.log(largeOn)" />
+      <span class="switch-label">large · 自定义橙</span>
     </div>
-    <div class="switch-foot">
-      <span class="dot"></span>
-      change 事件：<code>{{ lastEvent || '还没操作过' }}</code>
+    <div class="switch-row">
+      <GlassSwitch v-model="disabledOn" size="large" color="#0a84ff" disabled  />
+      <span class="switch-label">disabled · 禁用</span>
     </div>
   </div>
 </template>
@@ -72,25 +63,5 @@ function onChange(value, meta) {
   font-size: 13px;
   font-weight: 600;
   color: #1d1d1f;
-}
-.switch-foot {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(17, 17, 41, 0.08);
-  font-size: 12px;
-  color: #8c8ca8;
-}
-.switch-foot .dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #34c759;
-}
-.switch-foot code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12px;
-  color: #6a5cff;
 }
 </style>

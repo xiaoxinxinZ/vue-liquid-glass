@@ -12,62 +12,87 @@
  *   2. 按住 / 拖动：滑块胀开、高出轨道，白色淡出 → 成无色玻璃，折射下方内容
  *   3. 松手：弹性回落到正常尺寸，白色重新盖住玻璃
  *
- * 用法：
- *   <GlassSwitch v-model="on" />                     // 默认 normal 尺寸
- *   <GlassSwitch v-model="on" size="mini" />         // 迷你
- *   <GlassSwitch v-model="on" size="large" />        // 大
- *   <GlassSwitch v-model="on" color="#0a84ff" />
- *   <GlassSwitch :default-value="true" />            // 非受控，默认打开
- *   <GlassSwitch v-model="on" style="width:120px" /> // 想自定义尺寸也可以直接写
+ * 用法（v-model）：
+ *   <GlassSwitch v-model="on" />                              // on 是 0/1 或 true/false
+ *   <GlassSwitch v-model="on" color="green" size="large" />  // 传预设色 / 尺寸
+ *   <GlassSwitch v-model="on" disabled />                    // 禁用
+ *   <GlassSwitch v-model="on" @change="(v) => console.log(v)" />
  *
  * props:
- *   modelValue    开关状态（布尔），v-model 绑定
- *   defaultValue  非受控时的默认值（不写 v-model 才生效），默认 false
+ *   modelValue    v-model 绑定值：0 / 1 或 true / false（内部归一化成布尔）
+ *                 —— 输出「跟随输入类型」：传数字回 0/1，传布尔回 true/false
+ *   defaultValue  非受控默认值（不传 modelValue 时生效），默认 false
  *   size          尺寸档位：'mini' | 'normal' | 'large'，默认 normal
- *   color         开启时轨道灌入的颜色，默认 #34c759（不影响滑块）
+ *   color         开启色：默认 'blue'（#0a84ff）。内置预设名 'blue'/'green'，
+ *                 也可直接传任意 CSS 颜色自定义
  *   trackColor    轨道底色（关闭态），默认半透明灰 rgba(118,118,128,.34)
  *   options       传给滑块 v-liquid-glass 的选项（材质 / 折射源）
+ *   disabled      禁用：不可点/拖/键盘，置灰并移除焦点
  *
  * events:
- *   update:modelValue          状态变化（拖动中实时触发）
- *   change(value, { source })  最终状态确认，source = 'click' | 'drag' | 'key'
- *   dragstart / dragend(value) 拖动开始 / 结束（已吸附到一侧）
+ *   update:modelValue          v-model 双向，值类型跟随输入（0/1 或 bool）
+ *   change(value, { source })  状态确认，value 类型跟随输入，source = 'click'|'drag'|'key'
+ *   dragstart / dragend(value) 拖动开始 / 结束
  *
  * 注意：class/style 透传到根元素；position:fixed/absolute 请用外层容器包裹。
  */
 import { computed, getCurrentInstance, onBeforeUnmount, ref, watch } from 'vue'
 
 const props = defineProps({
-  modelValue: { type: Boolean, default: false },
-  defaultValue: { type: Boolean, default: false },
+  /** v-model / model-value 绑定值：0 / 1 或 true / false（内部归一化成布尔判断开关态） */
+  modelValue: { type: [Boolean, Number], default: false },
+  /** 非受控时的默认值（不传 modelValue 才生效，其实走 v-model 时用不到） */
+  defaultValue: { type: [Boolean, Number], default: false },
   // 尺寸档位
   size: { type: String, default: 'normal' },
-  color: { type: String, default: '#34c759' },
+  /**
+   * 开启色：
+   *   - 传预设名（不传即默认蓝色）：'blue'（#0a84ff）/ 'green'（#34c759）
+   *   - 传任意 CSS 颜色（hex / rgb / hsl ...）即自定义色，直接生效
+   */
+  color: { type: String, default: 'blue' },
   trackColor: { type: String, default: 'rgba(118, 118, 128, 0.34)' },
   options: { type: Object, default: () => ({}) },
+  /** 禁用：不可点击 / 拖动 / 键盘操作，视觉置灰 */
+  disabled: { type: Boolean, default: false },
 })
 const emit = defineEmits(['update:modelValue', 'change', 'dragstart', 'dragend'])
 
-/* ---- 三档尺寸（宽 / 高 / 滑块左右内边距 / 轨道上下内缩 / 滑块上下内缩） ----
+/* ---- 两个内置默认色（不传 color 时用 blue） ---- */
+const COLOR_PRESETS = {
+  blue: '#0a84ff',
+  green: '#34c759',
+}
+
+// 把 color 解析成最终的 CSS 色值：
+//   是预设名 → 映射到预设色；否则当作自定义颜色字符串直接返回
+const resolvedColor = computed(() => COLOR_PRESETS[props.color] ?? props.color)
+
+/* ---- 三档尺寸（宽 / 高 / 滑块左右内边距 / 轨道上下内缩） ----
  * 高宽比更接近 iOS 那样细长的胶囊：宽度压窄，滑块接近圆形。
+ * 滑块的「额外内缩」--knob-extra 统一固定 2px（写在 CSS 变量兜底里），不随尺寸变。
  */
 const SIZES = {
-  mini: { w: 40, h: 24, pad: 2, trackInset: 3, knobInset: 2 },
-  normal: { w: 52, h: 30, pad: 2, trackInset: 3, knobInset: 2 },
-  large: { w: 66, h: 34, pad: 3, trackInset: 4, knobInset: 2 },
+  mini: { w: 40, h: 24, pad: 2, trackInset: 3 },
+  normal: { w: 52, h: 30, pad: 2, trackInset: 3 },
+  large: { w: 66, h: 34, pad: 3, trackInset: 4 },
 }
 
 const sizeInfo = computed(() => SIZES[props.size] || SIZES.normal)
 
-// 尺寸全部走 CSS 变量：一处定义，外部仍可用 style="width:..." 覆盖
+// 尺寸分两类下发：
+//   - width / height / border-radius 走内联 :style（优先级最高，外部 class 改不动，锁死比例）
+//   - 其余几何参数走 CSS 变量（--sw-pad / --track-inset 供子元素布局用）
 const sizeVars = computed(() => {
   const s = sizeInfo.value
   return {
+    width: `${s.w}px`,
+    height: `${s.h}px`,
+    borderRadius: '999px',
     '--sw-w': `${s.w}px`,
     '--sw-h': `${s.h}px`,
     '--sw-pad': `${s.pad}px`,
     '--track-inset': `${s.trackInset}px`,
-    '--knob-inset': `${s.knobInset}px`,
   }
 })
 
@@ -105,14 +130,23 @@ const KNOB_MATERIAL = {
   hairline: 1.0,
 }
 
-/* ---- 受控 / 非受控 ---- */
-const instance = getCurrentInstance()
-const hasModel = (() => {
-  const p = instance?.vnode?.props || {}
-  return 'modelValue' in p || 'model-value' in p
-})()
+/* ---- 受控 / 非受控 ----
+ * 以 modelValue 为标准 v-model 受控源（0/1 或 true/false 都可）。
+ * 传了 modelValue 即受控；否则走 defaultValue 非受控。
+ */
+const p = getCurrentInstance()?.vnode?.props || {}
+const hasModel = 'modelValue' in p || 'model-value' in p
+
 const innerOn = ref(props.defaultValue)
-const isOn = computed(() => (hasModel ? props.modelValue : innerOn.value))
+// 统一归一化成布尔：0 → false，1 → true，其它 truthy → true
+const isOn = computed(() => (hasModel ? !!props.modelValue : !!innerOn.value))
+
+/* ---- 输出值「跟随输入类型」----
+ * v-model 绑数字（0/1）时，update:modelValue / change 就回 0/1；
+ * 绑布尔（true/false）时，就回布尔。保证双向类型一致。
+ */
+const isNumberModel = computed(() => typeof props.modelValue === 'number')
+const outValue = (on) => (isNumberModel.value ? (on ? 1 : 0) : on)
 
 /* ---- 滑块位置：0 = 关（左），1 = 开（右）。拖动跟手的唯一来源 ---- */
 const knobPos = ref(isOn.value ? 1 : 0)
@@ -159,23 +193,37 @@ const knobFlexStyle = computed(() => {
 /* ---- 滑块填充色 ----
  * 滑块永远是白色，不跟开/关、也不跟轨道颜色变（颜色只属于底层轨道）。
  * 按住 → 淡出成 0，露出下面那块无色的透明玻璃。
+ * 禁用 → 白色略降透明度，视觉上「淡一点」但不失真。
  */
 const knobFillStyle = computed(() => ({
   background: KNOB_COLOR,
-  opacity: pressed.value ? 0 : 1,
+  opacity: pressed.value ? 0 : props.disabled ? 0.85 : 1,
 }))
 
-/* ---- 状态提交 ---- */
+/* ---- 轨道灌色（开启色）----
+ * 开启时灌 tint（opacity 0.95）；禁用时把颜色调淡（opacity 0.4），
+ * 保持「当前颜色」只是变淡，而不是整体置灰。
+ */
+const tintStyle = computed(() => ({
+  background: resolvedColor.value,
+  opacity: props.disabled ? (isOn.value ? 0.4 : 0) : isOn.value ? 0.95 : 0,
+}))
+
+/* ---- 状态提交 ----
+ * on 是布尔（新状态），outValue(on) 按输入类型输出 0/1 或 true/false，
+ * 同时喂给 update:modelValue（v-model）和 change。
+ */
 function commit(on, source) {
   if (on === isOn.value) return
   if (!hasModel) innerOn.value = on
   knobPos.value = on ? 1 : 0
-  emit('update:modelValue', on)
-  emit('change', on, { source })
+  emit('update:modelValue', outValue(on))
+  emit('change', outValue(on), { source })
 }
 
 /* ---- 指针交互 ---- */
 function down(e) {
+  if (props.disabled) return
   if (e.button !== 0 && e.pointerType === 'mouse') return
   // 阻止冒泡：别让外层容器跟着按压缩放（否则轨道尺寸变化会让拖动换算抖动）
   e.stopPropagation()
@@ -193,31 +241,27 @@ function down(e) {
     e.currentTarget.setPointerCapture(e.pointerId)
     captured = e.currentTarget.hasPointerCapture?.(e.pointerId) ?? false
   } catch {}
-  if (!captured) {
-    window.addEventListener('pointermove', windowMove, true)
-    window.addEventListener('pointerup', windowUp, true)
-    window.addEventListener('pointercancel', windowUp, true)
-  }
+  if (!captured) bindWindow(true)
 }
 
 function windowMove(e) {
-  // 合成一个带正确 currentTarget 的分发：直接复用 move 逻辑里的坐标即可。
-  // 这里绕过 currentTarget 测量，用根节点自己量。
-  handleMove(e.clientX, e.clientY)
+  handleMove(e.clientX)
 }
 
-function windowUp(e) {
-  window.removeEventListener('pointermove', windowMove, true)
-  window.removeEventListener('pointerup', windowUp, true)
-  window.removeEventListener('pointercancel', windowUp, true)
+// 挂 / 卸 window 兜底监听（用于指针捕获失败时拖出组件的收尾）
+function bindWindow(on) {
+  const m = on ? 'addEventListener' : 'removeEventListener'
+  window[m]('pointermove', windowMove, true)
+  window[m]('pointerup', windowUp, true)
+  window[m]('pointercancel', windowUp, true)
+}
+
+function windowUp() {
+  bindWindow(false)
   finishUp()
 }
 
-onBeforeUnmount(() => {
-  window.removeEventListener('pointermove', windowMove, true)
-  window.removeEventListener('pointerup', windowUp, true)
-  window.removeEventListener('pointercancel', windowUp, true)
-})
+onBeforeUnmount(() => bindWindow(false))
 
 function handleMove(clientX) {
   if (!pressed.value) return
@@ -242,7 +286,7 @@ function handleMove(clientX) {
   const on = next >= 0.5
   if (on !== isOn.value) {
     if (!hasModel) innerOn.value = on
-    emit('update:modelValue', on)
+    emit('update:modelValue', outValue(on))
   }
 }
 
@@ -256,8 +300,8 @@ function finishUp() {
       const on = knobPos.value >= 0.5
       knobPos.value = on ? 1 : 0 // 吸附到最近一侧
       if (!hasModel) innerOn.value = on
-      emit('dragend', on)
-      if (on !== dragStartValue) emit('change', on, { source: 'drag' })
+      emit('dragend', outValue(on))
+      if (on !== dragStartValue) emit('change', outValue(on), { source: 'drag' })
       // 拖动过就吞掉紧随其后的 click，避免又翻一次。
       // 用时间戳而非布尔：即便拖出组件外松手、click 没来，也不会
       // 让下一次正常点击被误吞（布尔会永久残留直到下一次 click 才消费）。
@@ -276,20 +320,23 @@ function up(e) {
 }
 
 function clickHandle() {
+  if (props.disabled) return
   // 拖动收尾后的顺发 click，在 400ms 内忽略，防止重复翻转
   if (Date.now() < suppressUntil) return
   commit(!isOn.value, 'click')
 }
 
 function keyHandle() {
+  if (props.disabled) return
   commit(!isOn.value, 'key')
 }
 
-// 同步外部 v-model 变化（非拖动时）
+// 同步外部 modelValue 变化（非拖动时）
 watch(
   () => props.modelValue,
   (v) => {
-    if (!dragging.value) knobPos.value = v ? 1 : 0
+    if (dragging.value) return
+    knobPos.value = v ? 1 : 0
   },
 )
 </script>
@@ -298,11 +345,12 @@ watch(
   <span
     ref="rootEl"
     class="lg-switch"
-    :class="{ on: isOn, dragging, pressed }"
+    :class="{ on: isOn, dragging, pressed, disabled }"
     :style="sizeVars"
     role="switch"
     :aria-checked="isOn"
-    tabindex="0"
+    :aria-disabled="disabled"
+    :tabindex="disabled ? -1 : 0"
     @click="clickHandle"
     @pointerdown="down"
     @pointermove="move"
@@ -313,8 +361,8 @@ watch(
   >
     <!-- 底层：轨道 = 普通元素，实心灰胶囊，不参与 WebGL -->
     <span class="track" :style="{ background: trackColor }" aria-hidden="true">
-      <!-- 开启时灌入的颜色 -->
-      <i class="tint" :style="{ background: color, opacity: isOn ? 0.95 : 0 }"></i>
+      <!-- 开启时灌入的颜色（禁用时自动变淡） -->
+      <i class="tint" :style="tintStyle"></i>
     </span>
 
     <!-- 上层：滑块（按住时才是玻璃，且高出轨道） -->
@@ -338,14 +386,25 @@ watch(
 .lg-switch {
   position: relative;
   display: inline-block;
-  width: var(--sw-w, 68px);
-  height: var(--sw-h, 32px);
-  border-radius: 999px;
+  /* width / height / border-radius 走内联 :style 锁死（size 预设控制），此处不声明 */
   cursor: pointer;
   outline: none;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
   touch-action: none; /* 拖动必需：阻止浏览器默认手势 */
+}
+
+/* 禁用态：不可点、不可拖；颜色保持当前色，只是「变淡一点」。
+   tint（开启色）和滑块白色已由 JS 内联处理淡出；
+   这里只负责：光标、交互穿透、以及关闭态灰色轨道的提亮变淡。 */
+.lg-switch.disabled {
+  cursor: not-allowed;
+}
+.lg-switch.disabled * {
+  pointer-events: none;
+}
+.lg-switch.disabled .track {
+  filter: brightness(1.35);
 }
 
 /* ---------------- 底层轨道：普通 CSS 胶囊 ---------------- *
