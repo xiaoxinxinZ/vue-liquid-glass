@@ -5,8 +5,7 @@
  * <GlassNav
  *   v-model="tab"
  *   :items="navItems"
- *   :options="glassOptions"   // v-liquid-glass 的选项（材质 + 折射源）
- *   :frost="0.58"             // 0~1：整条导航的柔滑比例
+ *   :frost="0.6"              // 0~1：整条导航的柔滑比例
  *   color="#1d1d1f" active-color="#0a84ff"
  *   @click="onClick" @change="onChange"
  * />
@@ -37,7 +36,6 @@ import { routerKey } from 'vue-router'
 const props = defineProps({
   items: { type: Array, required: true },
   modelValue: { type: [String, Number], default: '' },
-  options: { type: Object, default: () => ({}) },
   color: { type: String, default: '#1d1d1f' },
   activeColor: { type: String, default: '#0a84ff' },
   /** 0~1，导航整体柔滑比例：0 = 清澈透明（折射锐利，几乎看不见玻璃本体），1 = 重度磨砂奶白 */
@@ -48,13 +46,13 @@ const props = defineProps({
    * 默认 76：按 iOS 26 胶囊 tab bar 的紧凑间距（单格 ≥ 44pt tap target）。
    */
   segWidth: { type: Number, default: 76 },
-  /** 导航高度（px）。默认 56，对齐 iOS 26 tab bar 的 regular 高度（56pt） */
-  height: { type: Number, default: 56 },
 })
+// 材质 / 折射 / 高度内部写死，不对外暴露 options / height
 const emit = defineEmits(['update:modelValue', 'change', 'click'])
 
 /* ---------------- 常量：想调手感改这里 ---------------- */
 const PAD = 4 // 文字层相对导航的内边距
+const NAV_HEIGHT = 56 // 导航高度：对齐 iOS 26 tab bar regular（56pt），内部锁死不可自定义
 // 按压/拖动时：胶囊横向撑开 + 纵向长高，形成"凸起的清澈透镜"
 const GROW_W = 1.12 // 按压时胶囊宽度倍数（横向撑开，仍以格子中心为轴）
 const GROW_H = 1.15 // 按压时胶囊高度倍数
@@ -274,18 +272,16 @@ const normalIcon = (item) => item.normalImg || item.activeImg
 const activeIcon = (item) => item.activeImg || item.normalImg
 
 /* ---------------- 材质 ---------------- */
-// 玻璃材质的默认底子：官方默认参数。轨道的 frost/tint 由组件内部按 frost prop
-// 实时推导，使用方通常只需传 frost，不用关心 material 细节。
+// 材质基础参数用库的默认值（空对象 = 走 apple-liquid-glass-webgl 的 DEFAULT_MATERIAL_V2），
+// frost / tint 由组件内部按 frost prop 实时推导，不接外部 options。
 function baseMaterial() {
-  return props.options.material || {}
+  return {}
 }
 
-// 折射源默认就是 'auto'（整页重绘）：把玻璃下方划过的所有真实页面元素
+// 折射源固定 'auto'（整页重绘）：把玻璃下方划过的所有真实页面元素
 // （文字、图片、渐变块、卡片……）都画进折射源，实现「任意内容划过都被折射」。
-// 如果你希望把某张固定背景图也始终纳入折射，可通过 options.backdrop 传
-// { source: '#xxx', anchor: 'viewport', fit: 'cover' }。
 function baseBackdrop() {
-  return props.options.backdrop ?? 'auto'
+  return 'auto'
 }
 
 // frost 一个旋钮同时给材质两件事：
@@ -305,7 +301,6 @@ const trackOptions = computed(() => {
   const on = pressed.value || dragging.value
   const f = on ? Math.min(1, frostValue.value + 0.3) : frostValue.value
   return {
-    ...props.options,
     material: { ...base, frost: f, tint: on ? 0.5 : 0.12 + 0.62 * f },
   }
 })
@@ -323,7 +318,6 @@ const glassOptions = computed(() => {
   const background = baseBackdrop()
   // 按压时统一用 'auto'（整页重绘，含玻璃下方所有真实元素）；静止时用显式源（默认也是 auto）
   return {
-    ...props.options,
     backdrop: pressed.value ? 'auto' : background,
     material: { ...base, ...PRESSED_MATERIAL },
   }
@@ -347,7 +341,7 @@ const pill = computed(() => {
 const rootStyle = computed(() => ({
   // 导航总宽 = 单格宽 × tab 数 + 左右内边距（内聚在组件里，使用方无需算宽度）
   width: `${props.items.length * props.segWidth + PAD * 2}px`,
-  height: `${props.height}px`,
+  height: `${NAV_HEIGHT}px`,
   '--nav-fg': props.color,
   '--nav-active-fg': props.activeColor,
   '--pill-a': pillAlpha.value,
