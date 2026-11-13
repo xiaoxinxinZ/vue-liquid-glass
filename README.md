@@ -8,11 +8,21 @@
 | **GlassSwitch** | 玻璃开关 |
 | **GlassBox** | 可点击的空玻璃容器 |
 
-## 视频演示
+## 效果预览
 
-<video src="docs/demo.m4v" controls width="100%" poster="docs/poster.png"></video>
+> 动图均为真实录屏（macOS Safari），非后期合成。
 
-> 演示视频 `demo.m4v`（已压缩至 4MB）。如替换视频，命名保持一致放入 `docs/` 目录（可选配 `poster.png` 作封面），GitHub 会自动渲染播放器。
+### 液态玻璃 Tabbar（GlassNav）
+
+![GlassNav 液态玻璃 Tabbar：悬浮胶囊、真实折射、跟随手指滑动](docs/tabbar.gif)
+
+### 玻璃开关（GlassSwitch）
+
+![GlassSwitch 玻璃开关：按下膨胀、拖动切换、松手弹簧回弹](docs/switch.gif)
+
+### 空玻璃容器（GlassBox）
+
+![GlassBox 空玻璃容器：点击整体弹簧缩放](docs/box.gif)
 
 ---
 
@@ -284,8 +294,9 @@ import { GlassBox } from '@/components/glass'
 
 ```
 ├── docs/
-│   ├── demo.m4v      # 演示视频（已压缩至 4MB）
-│   └── poster.png    # 视频封面（可选）
+│   ├── tabbar.gif    # Tabbar 演示动图
+│   ├── switch.gif    # 开关演示动图
+│   └── box.gif       # 玻璃容器演示动图
 ├── src/
 │   ├── components/glass/
 │   │   ├── GlassNav.vue      # 液态玻璃 Tabbar
