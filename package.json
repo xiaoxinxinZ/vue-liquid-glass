@@ -1,19 +1,59 @@
 {
-  "name": "liquid-glass-demo",
-  "private": true,
-  "version": "0.0.0",
+  "name": "diy-vue-liquid-glass",
+  "version": "0.1.0",
+  "description": "iOS 26 Liquid Glass 的 Vue 3 组件封装 —— Tabbar / Switch / 玻璃容器开箱即用，基于 apple-liquid-glass-webgl 的 WebGL2 真实折射",
   "type": "module",
+  "license": "MIT",
+  "author": "xiaoxinxinZ (朱英俊) <496843103@qq.com>",
+  "keywords": [
+    "vue",
+    "vue3",
+    "liquid-glass",
+    "glass",
+    "glassmorphism",
+    "webgl",
+    "ios",
+    "ios26",
+    "tabbar",
+    "switch",
+    "component"
+  ],
+  "main": "./dist/index.umd.cjs",
+  "module": "./dist/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.umd.cjs"
+    },
+    "./style.css": "./dist/style.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "*.css"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:lib": "vite build -c vite.config.lib.js",
+    "prepublishOnly": "npm run build:lib"
+  },
+  "peerDependencies": {
+    "vue": ">=3.5"
   },
   "dependencies": {
-    "apple-liquid-glass-webgl": "^2.6.0",
-    "vue": "^3.5.44"
+    "apple-liquid-glass-webgl": "^2.6.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.10",
     "vite": "^8.3.6"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xiaoxinxinZ/vue-liquid-glass.git"
+  },
+  "homepage": "https://github.com/xiaoxinxinZ/vue-liquid-glass",
+  "bugs": "https://github.com/xiaoxinxinZ/vue-liquid-glass/issues"
 }

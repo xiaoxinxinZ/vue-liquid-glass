@@ -30,8 +30,9 @@
  *   按压态材质刻意压低 edgeReach / edgeWidth / refraction：否则镜片边缘的
  *   捕获带会把轨道描边线和文字折叠成上下两道黑色拖影。
  */
-import { computed, inject, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { routerKey } from 'vue-router'
+import { computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+// 指令局部注册：组件脱离全局注册也能独立工作（npm 包形态必需）
+import { liquidGlass as vLiquidGlass } from '../../directives/liquidGlass.js'
 
 const props = defineProps({
   items: { type: Array, required: true },
@@ -255,7 +256,10 @@ function pointerUp(e) {
 }
 
 /* ---------------- 跳转（to 可选） ---------------- */
-const router = inject(routerKey, null)
+// 不直接 import vue-router（避免包的使用者被迫安装路由）：
+// vue-router 安装后会把 $router 挂到 app.config.globalProperties 上，
+// 从这里取同样的实例，装没装路由、用没用都不报错
+const router = getCurrentInstance()?.appContext.config.globalProperties.$router ?? null
 
 function navigate(to) {
   if (router) router.push(to)

@@ -25,6 +25,9 @@
  *   不要直接加在 GlassBox 根上，否则会覆盖内部 position:relative 导致玻璃画布错乱。
  */
 import { computed, ref } from 'vue'
+// 指令局部注册：script setup 里名为 vXxx 的变量可直接当 v-xxx 用，
+// 这样组件脱离「全局注册」也能独立工作（npm 包形态必需）
+import { liquidGlass as vLiquidGlass } from '../../directives/liquidGlass.js'
 
 const props = defineProps({
   // 磨砂度：0 清澈透明 ~ 1 重度磨砂奶白

@@ -37,6 +37,8 @@
  *   - class/style 透传到根元素；position:fixed/absolute 请用外层容器包裹。
  */
 import { computed, getCurrentInstance, onBeforeUnmount, ref, watch } from 'vue'
+// 指令局部注册：组件脱离全局注册也能独立工作（npm 包形态必需）
+import { liquidGlass as vLiquidGlass } from '../../directives/liquidGlass.js'
 
 const props = defineProps({
   /** v-model / model-value 绑定值：0 / 1 或 true / false（内部归一化成布尔判断开关态） */

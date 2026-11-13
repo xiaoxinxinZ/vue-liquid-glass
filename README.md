@@ -26,6 +26,43 @@
 
 ---
 
+## npm 安装使用
+
+组件库已发布到 npm，直接装进你的 Vue 3 项目：
+
+```bash
+npm install diy-vue-liquid-glass
+```
+
+```js
+// main.js
+import { createApp } from 'vue'
+import VueLiquidGlass from 'diy-vue-liquid-glass'
+import 'diy-vue-liquid-glass/style.css'
+
+const app = createApp(App)
+app.use(VueLiquidGlass) // 注册 v-liquid-glass 指令（组件已内置各自依赖，不装也能用）
+```
+
+```vue
+<script setup>
+import { GlassNav, GlassSwitch, GlassBox } from 'diy-vue-liquid-glass'
+</script>
+
+<template>
+  <GlassNav :items="items" v-model="active" />
+  <GlassSwitch v-model="on" />
+  <GlassBox :frost="0.5">随便放内容</GlassBox>
+</template>
+```
+
+> 也可以按需引入：`import { GlassBox } from 'diy-vue-liquid-glass'`，只打你用到的组件。
+> `v-liquid-glass` 指令同样被导出，想在自己的任意元素上做液态玻璃可用。
+
+---
+
+---
+
 # GlassNav 液态玻璃 Tabbar
 
 > 🎯 **iOS 26 Liquid Glass Tab Bar 的 Web 版还原**
