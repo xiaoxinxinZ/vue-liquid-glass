@@ -1,6 +1,6 @@
 <script setup>
 /**
- * myTabbar —— 封装好的液态玻璃导航的使用示例
+ * GlassTabbarDemo —— 封装好的液态玻璃导航的使用示例
  *
  * 这是给开发者的「最小用法案例」：只填业务数据，其余都由 GlassNav 组件内部处理。
  * 要在项目里复用，改下面几个参数即可：
@@ -39,11 +39,11 @@ const frost = 0.6
 /* ---- 5. 事件（按需使用，可以只留你需要的） ---- */
 // 点谁都触发（包括当前已选中的那一项）
 function onNavClick({ item, index, value }) {
-  console.log('[myTabbar] click →', item.label, value, index)
+  console.log('[GlassTabbarDemo] click →', item.label, value, index)
 }
 // 只有选中项真的变了才触发
 function onNavChange(item, value, index) {
-  console.log('[myTabbar] change →', item.label, value, index)
+  console.log('[GlassTabbarDemo] change →', item.label, value, index)
 }
 </script>
 

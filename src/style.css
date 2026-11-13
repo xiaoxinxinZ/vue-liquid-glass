@@ -14,8 +14,8 @@ body {
     Arial,
     sans-serif;
   color: #1d1d1f;
-  /* 官网页面自带浅色底（LandingPage .page），这里给一个兜底色，避免元素外露白 */
-  background: #f6f7fb;
+  /* 兜底色：深蓝紫梦幻底，与 LandingPage 融合渐变同色系，避免露白/露浅色 */
+  background: #14142b;
 }
 
 a {
