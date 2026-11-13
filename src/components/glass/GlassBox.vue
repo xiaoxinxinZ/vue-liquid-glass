@@ -13,10 +13,12 @@
  *   - 但「给玻璃本身写 background 颜色无效」：玻璃是透明的，底色由材质 tint 决定，
  *     里面自己的元素则可以自由写 background
  *
- * 无对外参数、无对外事件：
+ * 唯一对外参数是 frost（磨砂度），其余全部内部固定：
  *   - 按压缩放强度固定为 0.08（内部常量，不暴露）
- *   - 磨砂度 frost 固定为 0.6（内部常量，不暴露）
- *   - press / release 事件也不向外抛，纯内部实现按压回弹
+ *   - press / release 事件不向外抛，纯内部实现按压回弹
+ *
+ * Props:
+ *   - frost: 磨砂度 0 ~ 1（0 清澈透明 ~ 1 重度磨砂奶白），默认 0.6
  *
  * 注意（和所有玻璃组件一样）：
  *   根元素的 transform 被按压弹簧占用；position:fixed/absolute 请用外层容器包裹，
@@ -25,18 +27,16 @@
 import { computed, ref } from 'vue'
 
 const props = defineProps({
-  options: { type: Object, default: () => ({}) },
+  // 磨砂度：0 清澈透明 ~ 1 重度磨砂奶白
+  frost: { type: Number, default: 0.6 },
 })
 
 // 按压缩放强度：固定 0.08 = 按下放大 8%，不对外暴露
 const GROW = 0.08
-// 玻璃磨砂度：固定 0.6（0 清澈透明 ~ 1 重度磨砂奶白），不对外暴露
-const FROST = 0.6
 
-// 合并固定 frost 到材质里（写死 0.6），再交给 v-liquid-glass
+// 磨砂度交给材质的 frost（0.1~1 夹取，防误传负数/超界），其余材质全部用原库默认值
 const glassOptions = computed(() => ({
-  ...props.options,
-  material: { ...(props.options.material || {}), frost: FROST },
+  material: { frost: Math.min(1, Math.max(0, props.frost)) },
 }))
 
 // 「弹簧手感」交给 CSS transition 的贝塞尔曲线实现（见 .glass-box 样式）：

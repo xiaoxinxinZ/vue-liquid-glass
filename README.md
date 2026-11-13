@@ -222,6 +222,7 @@ const on = ref(0) // 0 关 ／ 1 开
 ## 特性
 
 - 🫙 **零配置**：像 `div` 一样用，`class` / `style` 透传给根元素
+- 🌫️ **磨砂可调**：唯一参数 `frost` 控制磨砂度（0 清澈 ~ 1 奶白），其余材质不暴露
 - 🧊 **透明玻璃**：玻璃本身透明（不写 `background` 颜色），里面元素可自由写背景色
 - 🫧 **按压弹簧回弹**：点击放大 8% + 变亮，松手 overshoot 回弹
 - 🧩 **内容自由**：内层用 `<slot>`，放文字 / 图片 / 组件都行
@@ -251,7 +252,7 @@ import { GlassBox } from '@/components/glass'
 
 | 属性 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| `options` | `Object` | `{}` | 传给 `v-liquid-glass` 的选项（材质 / 折射源） |
+| `frost` | `Number` | `0.6` | 磨砂度，`0` 清澈透明 ~ `1` 重度磨砂奶白（唯一对外参数，其余材质全部内部固定） |
 
 ## 使用要点
 
@@ -261,9 +262,22 @@ import { GlassBox } from '@/components/glass'
 
 ---
 
+## 致谢与开源说明（二次封装声明）
+
+> 本项目是 [apple-liquid-glass-webgl](https://www.npmjs.com/package/apple-liquid-glass-webgl)（作者 [Oliverrr2424](https://github.com/Oliverrr2424)，[GitHub 仓库](https://github.com/Oliverrr2424/webgl-apple-liquid-glass)）的 **Vue 3 二次封装**，并非从零实现的液态玻璃引擎。底层的光折射、材质渲染、模糊磨砂等 WebGL2 核心能力全部来自原库，版权归原作者所有；本仓库仅通过 npm 依赖其发行包，未复制、未修改其任何源码。
+>
+> 在此基础上，本项目做了以下二次开发：
+> - 将原库封装为 **Vue 3 组件**（`GlassNav` / `GlassSwitch` / `GlassBox`）与 **自定义指令**（`v-liquid-glass`），响应式生命周期托管（挂载 / 销毁 / 更新）开箱即用；
+> - 基于 Vue 3 实现了**对齐 iOS 26 Liquid Glass 风格的 Tabbar、开关、玻璃容器**等交互组件，补齐原库在 Vue 生态的接入层；
+> - 提供 Vite 工程、可运行的示例 Demo 与中文文档，降低原库的上手门槛。
+>
+> 原库采用 [MIT License](https://github.com/Oliverrr2424/webgl-apple-liquid-glass/blob/main/LICENSE)，本仓库同样采用 **MIT License** 开源；使用本项目时请同时保留原库的版权声明。如有侵权或引用不当，欢迎提 Issue，我会第一时间处理。
+>
+> 感谢原库作者的出色工作 —— 本项目只是站在巨人肩膀上的薄薄一层胶水。🙏
+
 ## 依赖
 
-- [apple-liquid-glass-webgl](https://www.npmjs.com/package/apple-liquid-glass-webgl) —— 液态玻璃渲染核心
+- [apple-liquid-glass-webgl](https://www.npmjs.com/package/apple-liquid-glass-webgl) —— 液态玻璃渲染核心（MIT）
 - [Vue 3](https://vuejs.org/) —— `^3.5`
 
 ## 目录结构
