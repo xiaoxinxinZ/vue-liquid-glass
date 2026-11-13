@@ -26,15 +26,15 @@
  *   color         开启色：默认 'blue'（#0a84ff）。内置预设名 'blue'/'green'，
  *                 也可直接传任意 CSS 颜色自定义
  *   trackColor    轨道底色（关闭态），默认半透明灰 rgba(118,118,128,.34)
- *   options       传给滑块 v-liquid-glass 的选项（材质 / 折射源）
  *   disabled      禁用：不可点/拖/键盘，置灰并移除焦点
  *
  * events:
  *   update:modelValue          v-model 双向，值类型跟随输入（0/1 或 bool）
  *   change(value, { source })  状态确认，value 类型跟随输入，source = 'click'|'drag'|'key'
- *   dragstart / dragend(value) 拖动开始 / 结束
  *
- * 注意：class/style 透传到根元素；position:fixed/absolute 请用外层容器包裹。
+ * 注意：
+ *   - 材质 / 折射参数内部写死，不对外暴露（无 options 属性）
+ *   - class/style 透传到根元素；position:fixed/absolute 请用外层容器包裹。
  */
 import { computed, getCurrentInstance, onBeforeUnmount, ref, watch } from 'vue'
 
@@ -52,11 +52,11 @@ const props = defineProps({
    */
   color: { type: String, default: 'blue' },
   trackColor: { type: String, default: 'rgba(118, 118, 128, 0.34)' },
-  options: { type: Object, default: () => ({}) },
   /** 禁用：不可点击 / 拖动 / 键盘操作，视觉置灰 */
   disabled: { type: Boolean, default: false },
 })
-const emit = defineEmits(['update:modelValue', 'change', 'dragstart', 'dragend'])
+// 只暴露 v-model + change 两个对外通道；材质/折射内部写死，不开放 options
+const emit = defineEmits(['update:modelValue', 'change'])
 
 /* ---- 两个内置默认色（不传 color 时用 blue） ---- */
 const COLOR_PRESETS = {
@@ -159,10 +159,13 @@ let startPos = 0
 let dragStartValue = false
 let suppressUntil = 0 // 拖动收尾后，短时间内（如 400ms）吞掉顺发 click
 
-/* ---- 滑块玻璃：按住时才挂载（省一个 WebGL 上下文），折射源跟着页面走 ---- */
+/* ---- 滑块玻璃：按住时才挂载（省一个 WebGL 上下文），折射源跟着页面走 ----
+ * 材质 / 折射参数全部写死（KNOB_MATERIAL），不对外暴露；
+ * 折射源固定 'auto'（整页重绘），保证能折射到玻璃下方的真实画面。
+ */
 const knobGlassOptions = computed(() => ({
-  backdrop: props.options.backdrop ?? 'auto',
-  material: { ...(props.options.material || {}), ...KNOB_MATERIAL },
+  backdrop: 'auto',
+  material: KNOB_MATERIAL,
 }))
 
 /* ---- 滑块位置：0 → 贴左，1 → 贴右 ---- */
@@ -270,7 +273,6 @@ function handleMove(clientX) {
   if (!dragging.value) {
     if (Math.abs(dx) < 3) return
     dragging.value = true
-    emit('dragstart')
   }
 
   const rect = rootEl.value?.getBoundingClientRect()
@@ -300,7 +302,6 @@ function finishUp() {
       const on = knobPos.value >= 0.5
       knobPos.value = on ? 1 : 0 // 吸附到最近一侧
       if (!hasModel) innerOn.value = on
-      emit('dragend', outValue(on))
       if (on !== dragStartValue) emit('change', outValue(on), { source: 'drag' })
       // 拖动过就吞掉紧随其后的 click，避免又翻一次。
       // 用时间戳而非布尔：即便拖出组件外松手、click 没来，也不会

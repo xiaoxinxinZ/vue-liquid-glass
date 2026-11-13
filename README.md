@@ -76,8 +76,9 @@ const on = ref(0) // 0 关 ／ 1 开
 | `size` | `String` | `'normal'` | 尺寸档位：`'mini'` \| `'normal'` \| `'large'` |
 | `color` | `String` | `'blue'` | 开启色。内置预设 `'blue'`（`#0a84ff`）/ `'green'`（`#34c759`），或直接传任意 CSS 颜色自定义 |
 | `trackColor` | `String` | `rgba(118,118,128,.34)` | 轨道底色（关闭态） |
-| `options` | `Object` | `{}` | 传给滑块 `v-liquid-glass` 的选项（材质 / 折射源） |
 | `disabled` | `Boolean` | `false` | 禁用：不可点击 / 拖动 / 键盘，颜色变淡并移除焦点 |
+
+> **注意**：材质与折射参数内部已写死，不提供 `options` 属性，无法从外部覆盖。
 
 ### 尺寸档位
 
@@ -101,15 +102,11 @@ const on = ref(0) // 0 关 ／ 1 开
 | --- | --- | --- |
 | `update:modelValue` | `(value)` | v-model 双向，值类型跟随输入（`0/1` 或 `bool`） |
 | `change` | `(value, { source })` | 状态确认。`source` = `'click'` \| `'drag'` \| `'key'` |
-| `dragstart` | `(value)` | 拖动开始 |
-| `dragend` | `(value)` | 拖动结束（已吸附到一侧） |
 
 ```vue
 <GlassSwitch
   v-model="on"
   @change="(value, meta) => console.log('值', value, '来源', meta.source)"
-  @dragstart="(v) => console.log('开始拖', v)"
-  @dragend="(v) => console.log('结束拖', v)"
 />
 ```
 
