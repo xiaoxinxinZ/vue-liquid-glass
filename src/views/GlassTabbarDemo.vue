@@ -30,6 +30,7 @@ const navItems = [
   { label: 'Profile',  value: 'profile',  normalImg: imgMy,       activeImg: imgActiveMy },
 ]
 
+
 /* ---- 3. 默认选中值（v-model 绑 value，不是索引） ---- */
 const tab = ref('home')
 

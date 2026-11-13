@@ -41,14 +41,15 @@ const props = defineProps({
   color: { type: String, default: '#1d1d1f' },
   activeColor: { type: String, default: '#0a84ff' },
   /** 0~1，导航整体柔滑比例：0 = 清澈透明（折射锐利，几乎看不见玻璃本体），1 = 重度磨砂奶白 */
-  frost: { type: Number, default: 0.58 },
+  frost: { type: Number, default: 0.6 },
   /**
    * 单个 tab 的目标宽度（px）。组件据此自动算出导航总宽 = 单格宽 × tab 数 + 左右内边距，
    * 做到「几个 tab 撑多宽」。所以使用方通常不需要再给导航设宽度。
+   * 默认 76：按 iOS 26 胶囊 tab bar 的紧凑间距（单格 ≥ 44pt tap target）。
    */
-  segWidth: { type: Number, default: 84 },
-  /** 导航高度（px）。默认 60，图标 + 文字上下排列需要一定高度 */
-  height: { type: Number, default: 60 },
+  segWidth: { type: Number, default: 76 },
+  /** 导航高度（px）。默认 56，对齐 iOS 26 tab bar 的 regular 高度（56pt） */
+  height: { type: Number, default: 56 },
 })
 const emit = defineEmits(['update:modelValue', 'change', 'click'])
 
@@ -632,15 +633,16 @@ const baseClipRight = computed(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 4px; /* iOS 26：图标与文字间距约 4pt */
   padding: 0 4px;
 }
 
 /* 图标是真 <img>：颜色已经在 PNG 里预染好（-c 默认色 / -a 选中色），
-   这样折射缓冲里能抓到图标的真实形状，而不是 mask 上色留下的方块 */
+   这样折射缓冲里能抓到图标的真实形状，而不是 mask 上色留下的方块。
+   24px 对齐 iOS 26 SF Symbols 的标准尺寸（24×24pt，medium weight） */
 .seg-icon {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   flex: none;
   display: block;
   object-fit: contain;
@@ -649,9 +651,11 @@ const baseClipRight = computed(() => {
   pointer-events: none;
 }
 
+/* 文字：SF Pro Text 10pt / medium（iOS 26 tab bar 标准字号） */
 .seg-label {
   max-width: 100%;
-  font-size: clamp(10px, 0.78vw, 12px);
+  font-size: 10px;
+  font-weight: 500;
   line-height: 1;
   white-space: nowrap;
   overflow: hidden;

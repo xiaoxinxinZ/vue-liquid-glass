@@ -31,7 +31,7 @@ const props = defineProps({
 // 按压缩放强度：固定 0.08 = 按下放大 8%，不对外暴露
 const GROW = 0.08
 // 玻璃磨砂度：固定 0.6（0 清澈透明 ~ 1 重度磨砂奶白），不对外暴露
-const FROST = 0.5
+const FROST = 0.6
 
 // 合并固定 frost 到材质里（写死 0.6），再交给 v-liquid-glass
 const glassOptions = computed(() => ({
