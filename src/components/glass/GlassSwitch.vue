@@ -35,7 +35,7 @@
  *
  * 注意：class/style 透传到根元素；position:fixed/absolute 请用外层容器包裹。
  */
-import { computed, getCurrentInstance, ref, watch } from 'vue'
+import { computed, getCurrentInstance, onBeforeUnmount, ref, watch } from 'vue'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -118,11 +118,12 @@ const isOn = computed(() => (hasModel ? props.modelValue : innerOn.value))
 const knobPos = ref(isOn.value ? 1 : 0)
 const dragging = ref(false)
 const pressed = ref(false)
+const rootEl = ref(null)
 
 let startX = 0
 let startPos = 0
 let dragStartValue = false
-let suppressClick = false
+let suppressUntil = 0 // 拖动收尾后，短时间内（如 400ms）吞掉顺发 click
 
 /* ---- 滑块玻璃：按住时才挂载（省一个 WebGL 上下文），折射源跟着页面走 ---- */
 const knobGlassOptions = computed(() => ({
@@ -183,15 +184,44 @@ function down(e) {
   dragStartValue = isOn.value
   startX = e.clientX
   startPos = knobPos.value
-  // 指针捕获：拖出轨道外也继续跟手
+
+  // 指针捕获：拖出轨道外也继续跟手。
+  // 捕获失败（或被别的元素抢占）时，退化为在 window 上监听 move/up，
+  // 保证任意位置松手都能收尾，不会出现"拖出组件后滑块卡住不动"。
+  let captured = false
   try {
     e.currentTarget.setPointerCapture(e.pointerId)
+    captured = e.currentTarget.hasPointerCapture?.(e.pointerId) ?? false
   } catch {}
+  if (!captured) {
+    window.addEventListener('pointermove', windowMove, true)
+    window.addEventListener('pointerup', windowUp, true)
+    window.addEventListener('pointercancel', windowUp, true)
+  }
 }
 
-function move(e) {
+function windowMove(e) {
+  // 合成一个带正确 currentTarget 的分发：直接复用 move 逻辑里的坐标即可。
+  // 这里绕过 currentTarget 测量，用根节点自己量。
+  handleMove(e.clientX, e.clientY)
+}
+
+function windowUp(e) {
+  window.removeEventListener('pointermove', windowMove, true)
+  window.removeEventListener('pointerup', windowUp, true)
+  window.removeEventListener('pointercancel', windowUp, true)
+  finishUp()
+}
+
+onBeforeUnmount(() => {
+  window.removeEventListener('pointermove', windowMove, true)
+  window.removeEventListener('pointerup', windowUp, true)
+  window.removeEventListener('pointercancel', windowUp, true)
+})
+
+function handleMove(clientX) {
   if (!pressed.value) return
-  const dx = e.clientX - startX
+  const dx = clientX - startX
 
   if (!dragging.value) {
     if (Math.abs(dx) < 3) return
@@ -199,7 +229,8 @@ function move(e) {
     emit('dragstart')
   }
 
-  const rect = e.currentTarget.getBoundingClientRect()
+  const rect = rootEl.value?.getBoundingClientRect()
+  if (!rect) return
   const travel = (rect.width - sizeInfo.value.pad * 2) * (1 - KNOB_RATIO)
   if (travel <= 0) return
 
@@ -215,27 +246,38 @@ function move(e) {
   }
 }
 
-function up() {
-  if (!pressed.value) return
-  pressed.value = false
+function move(e) {
+  handleMove(e.clientX)
+}
 
-  if (dragging.value) {
-    dragging.value = false
-    const on = knobPos.value >= 0.5
-    knobPos.value = on ? 1 : 0 // 吸附到最近一侧
-    if (!hasModel) innerOn.value = on
-    emit('dragend', on)
-    if (on !== dragStartValue) emit('change', on, { source: 'drag' })
-    // 拖动过就吞掉紧随其后的 click，避免又翻一次
-    suppressClick = true
+function finishUp() {
+  if (pressed.value) {
+    if (dragging.value) {
+      const on = knobPos.value >= 0.5
+      knobPos.value = on ? 1 : 0 // 吸附到最近一侧
+      if (!hasModel) innerOn.value = on
+      emit('dragend', on)
+      if (on !== dragStartValue) emit('change', on, { source: 'drag' })
+      // 拖动过就吞掉紧随其后的 click，避免又翻一次。
+      // 用时间戳而非布尔：即便拖出组件外松手、click 没来，也不会
+      // 让下一次正常点击被误吞（布尔会永久残留直到下一次 click 才消费）。
+      suppressUntil = Date.now() + 400
+    }
   }
+  pressed.value = false
+  dragging.value = false
+}
+
+function up(e) {
+  finishUp()
+  try {
+    e.currentTarget?.releasePointerCapture?.(e.pointerId)
+  } catch {}
 }
 
 function clickHandle() {
-  if (suppressClick) {
-    suppressClick = false
-    return
-  }
+  // 拖动收尾后的顺发 click，在 400ms 内忽略，防止重复翻转
+  if (Date.now() < suppressUntil) return
   commit(!isOn.value, 'click')
 }
 
@@ -254,6 +296,7 @@ watch(
 
 <template>
   <span
+    ref="rootEl"
     class="lg-switch"
     :class="{ on: isOn, dragging, pressed }"
     :style="sizeVars"

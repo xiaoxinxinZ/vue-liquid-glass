@@ -298,10 +298,11 @@ const frostValue = computed(() => {
 
 const trackOptions = computed(() => {
   const base = baseMaterial()
-  // 按住/拖动时把导轨自己的材质拉满磨砂（frost = 1），白度由玻璃材质产生，
-  // 不再额外叠任何 CSS 白层。tint 比滑杆公式略低，避免磨砂一开就死白。
+  // 按住/拖动时：模糊度在组件自身 frost 基础上 +0.2（封顶 1），
+  // 而不是固定写死成 1 —— 否则 frost 本身就很高的组件，按下反而会因为
+  // tint 回落而显得更透明（视觉倒退）。
   const on = pressed.value || dragging.value
-  const f = on ? 1 : frostValue.value
+  const f = on ? Math.min(1, frostValue.value + 0.3) : frostValue.value
   return {
     ...props.options,
     material: { ...base, frost: f, tint: on ? 0.5 : 0.12 + 0.62 * f },
