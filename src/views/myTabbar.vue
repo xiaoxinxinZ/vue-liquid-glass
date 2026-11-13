@@ -34,7 +34,7 @@ const navItems = [
 const tab = ref('home')
 
 /* ---- 4. frost：透明/磨砂旋钮（唯一外观参数，0 透明 ~ 1 磨砂） ---- */
-const frost = 0.45
+const frost = 0.55
 
 /* ---- 5. 事件（按需使用，可以只留你需要的） ---- */
 // 点谁都触发（包括当前已选中的那一项）

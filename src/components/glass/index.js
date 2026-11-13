@@ -4,7 +4,7 @@
  *
  * GlassSurface  最基础的玻璃表面：尺寸圆角由外部 CSS 控，空着也成立
  * GlassButton   带按压弹簧的按钮，bloom 属性 = 按住膨胀变亮
- * GlassSwitch   开关，v-model 布尔
+ * GlassSwitch   开关：size（mini/normal/large）+ v-model + 轨道 color + change/dragstart/dragend；按压时滑块变玻璃
  * GlassNav      胶囊导航：items 数组 + v-model(value) + frost(0~1)
  * GlassBox      可点击的空玻璃容器：里面放任意内容，点击有整体弹簧缩放
  */
