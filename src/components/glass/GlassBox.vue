@@ -13,12 +13,16 @@
  *   - 但「给玻璃本身写 background 颜色无效」：玻璃是透明的，底色由材质 tint 决定，
  *     里面自己的元素则可以自由写 background
  *
- * 唯一对外参数是 frost（磨砂度），其余全部内部固定：
- *   - 按压缩放强度固定为 0.08（内部常量，不暴露）
- *   - press / release 事件不向外抛，纯内部实现按压回弹
+ * 弹性动画只暴露一个参数 grow：
+ *   - grow: 0 ~ 1，0 = 完全不弹，1 = 弹得最强（默认 0.5）。
+ *     弹的是「固定像素」而非比例：无论盒子多大，按下时宽、高两边的边缘位移像素都相同。
+ *     grow 映射到固定像素档位 = grow * 5px（即 grow=1 时每边位移 5px，grow=0.5 时 2.5px），
+ *     再按宽高分别反推 scaleX/scaleY，因此大小元素手感绝对一致，不会「越大越夸张」。
+ *     代价：宽高放大比例不同，宽高悬殊的元素按下会轻微变形（圆角变椭圆）。
  *
  * Props:
  *   - frost: 磨砂度 0 ~ 1（0 清澈透明 ~ 1 重度磨砂奶白），默认 0.6
+ *   - grow:  弹性强度 0 ~ 1（默认 0.6）
  *
  * 注意（和所有玻璃组件一样）：
  *   根元素的 transform 被按压弹簧占用；position:fixed/absolute 请用外层容器包裹，
@@ -32,10 +36,15 @@ import { liquidGlass as vLiquidGlass } from '../../directives/liquidGlass.js'
 const props = defineProps({
   // 磨砂度：0 清澈透明 ~ 1 重度磨砂奶白
   frost: { type: Number, default: 0.6 },
+  // 弹性强度 0 ~ 1（0 = 不弹，1 = 最强），固定像素位移
+  grow: { type: Number, default: 0.5 },
 })
 
-// 按压缩放强度：固定 0.08 = 按下放大 8%，不对外暴露
-const GROW = 0.08
+// 弹性最大位移（像素）：grow=1 时边缘位移 5px，0~1 线性映射到 0~5px
+const MAX_SHIFT = 5
+
+// 根元素节点：用于读取按下时的实际尺寸，把固定像素位移反推回 scale
+const rootEl = ref(null)
 
 // 磨砂度交给材质的 frost（0.1~1 夹取，防误传负数/超界），其余材质全部用原库默认值
 const glassOptions = computed(() => ({
@@ -48,8 +57,29 @@ const glassOptions = computed(() => ({
 // 松手时缩放会越过基线再回稳，形成明确的"弹一下再落下"的阻尼感。
 const pressed = ref(false)
 
+// 固定像素位移换算成 scale：
+//   按下位移 px = clamp(grow, 0, 1) * MAX_SHIFT，是固定像素、不随尺寸放大；
+//   再按宽、高分别反推 scaleX/scaleY = 1 + px / 对应边长，
+//   这样宽、高两边的边缘位移像素都精确等于 px，大小元素绝对一致。
+//   （副作用：宽高放大比例不同，元素会轻微变形，圆角会变椭圆——这是选「分开缩放」的代价）
+//   grow=0 时 px=0 → scale=1，完全不弹。
+const scale = computed(() => {
+  if (!pressed.value) return { x: 1, y: 1 }
+  const g = Math.min(1, Math.max(0, Number(props.grow)))
+  if (g === 0) return { x: 1, y: 1 }
+
+  const px = g * MAX_SHIFT
+  const el = rootEl.value
+  const w = el ? el.offsetWidth : 0
+  const h = el ? el.offsetHeight : 0
+  // 兜底：尺寸未知时按 100px 近似，避免除零
+  const sx = w ? 1 + px / w : 1 + px / 100
+  const sy = h ? 1 + px / h : 1 + px / 100
+  return { x: sx, y: sy }
+})
+
 const style = computed(() => ({
-  transform: `scale(${1 + (pressed.value ? 1 : 0) * GROW})`,
+  transform: `scale(${scale.value.x}, ${scale.value.y})`,
   filter: `brightness(${pressed.value ? 1.12 : 1})`,
 }))
 
@@ -63,6 +93,7 @@ const up = () => {
 
 <template>
   <div
+    ref="rootEl"
     class="glass-box"
     :style="style"
     v-liquid-glass="glassOptions"

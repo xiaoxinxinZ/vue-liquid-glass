@@ -8,17 +8,37 @@ import GlassBox from '../components/glass/GlassBox.vue'
 </script>
 
 <template>
-  <GlassBox class="grad-tile">
-    <div class="grad-hero">
-      <span class="grad-badge">渐变</span>
-    </div>
-    <div class="grad-body">
-      <span>这块玻璃里放了渐变块内容</span>
-    </div>
-  </GlassBox>
+  <div class="demo">
+    <GlassBox class="grad-tile" :grow="1">
+      <div class="grad-hero">
+        <span class="grad-badge">grow = 1 最强</span>
+      </div>
+      <div class="grad-body">
+        <span>这块玻璃里放了渐变块内容</span>
+        <span class="hint">固定像素，弹得最猛</span>
+      </div>
+    </GlassBox>
+
+    <GlassBox class="grad-tile" :grow="0">
+      <div class="grad-hero grad-hero--alt">
+        <span class="grad-badge">grow = 0 不弹</span>
+      </div>
+      <div class="grad-body">
+        <span>完全不弹，只保留亮度反馈</span>
+        <span class="hint">点击试试</span>
+      </div>
+    </GlassBox>
+  </div>
 </template>
 
 <style scoped>
+.demo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-start;
+  padding: 24px;
+}
 .grad-tile {
   pointer-events: auto;
   width: 280px;
@@ -30,6 +50,9 @@ import GlassBox from '../components/glass/GlassBox.vue'
   height: 56px;
   background: linear-gradient(120deg, #6a5cff, #c471f5, #48c6ef);
   position: relative;
+}
+.grad-hero--alt {
+  background: linear-gradient(120deg, #5d6d7e, #85929e, #aeb6bf);
 }
 .grad-badge {
   position: absolute;
@@ -55,5 +78,9 @@ import GlassBox from '../components/glass/GlassBox.vue'
 .grad-body span {
   font-size: 13px;
   color: #8c8ca8;
+}
+.grad-body .hint {
+  font-size: 11px;
+  color: #b0b0c4;
 }
 </style>
