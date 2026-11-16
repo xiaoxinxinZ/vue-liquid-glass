@@ -77,6 +77,7 @@ import { GlassNav, GlassSwitch, GlassBox } from 'diy-vue-liquid-glass'
 - 🔄 **v-model 双向绑定**（绑 `value`，非索引）
 - 🖐 **点击 + 拖动**：按下即选中滑动、拖动跟手、松手吸附弹簧回弹
 - 🎨 **frost 磨砂旋钮**：`0` 清澈透明 ~ `1` 重度磨砂奶白
+- 💠 **pillAlpha 滑块透明度**：`0.1` ~ `0.6`（默认 `0.2`），控制静止态滑块的磨砂白度，越低越透
 - 🧩 **PNG 图标**：常态图 + 选中图两套，半程变色无缝
 
 ## 快速上手
@@ -109,6 +110,7 @@ const items = [
 | `items` | `Array` | 必填 | 每个 tab：`{ label, value, normalImg?, activeImg?, to? }` |
 | `modelValue` | `String \| Number` | `''` | v-model 绑定值（绑 `value`，不是索引） |
 | `frost` | `Number` | `0.6` | 磨砂比例：`0` 清澈透明 ~ `1` 重度磨砂奶白 |
+| `pillAlpha` | `Number` | `0.2` | 静止态滑块（胶囊）磨砂白不透明度，范围 `0.1` ~ `0.6`（超出会被夹取、无效），越低越透 |
 | `color` | `String` | `'#1d1d1f'` | 未选中文字/图标颜色 |
 | `activeColor` | `String` | `'#0a84ff'` | 选中态颜色 |
 | `segWidth` | `Number` | `76` | 单个 tab 目标宽度（px），导航总宽 = `segWidth × 数量 + 内边距` |

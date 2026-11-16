@@ -6,6 +6,7 @@
  *   v-model="tab"
  *   :items="navItems"
  *   :frost="0.6"              // 0~1：整条导航的柔滑比例
+ *   :pill-alpha="0.2"         // 0.1~0.6：静止态滑块磨砂白不透明度（默认 0.2，越低越透）
  *   color="#1d1d1f" active-color="#0a84ff"
  *   @click="onClick" @change="onChange"
  * />
@@ -41,6 +42,12 @@ const props = defineProps({
   activeColor: { type: String, default: '#0a84ff' },
   /** 0~1，导航整体柔滑比例：0 = 清澈透明（折射锐利，几乎看不见玻璃本体），1 = 重度磨砂奶白 */
   frost: { type: Number, default: 0.6 },
+  /**
+   * 0.1~0.6，静止态滑块（胶囊）磨砂白的不透明度，默认 0.2。
+   * 越小滑块越透；超出 [0.1, 0.6] 会被夹取（开发者设了也没作用）。
+   * 注意：这只控制「静止态」的磨砂白；按住时磨砂层本来就会淡出，交给真玻璃折射。
+   */
+  pillAlpha: { type: Number, default: 0.2 },
   /**
    * 单个 tab 的目标宽度（px）。组件据此自动算出导航总宽 = 单格宽 × tab 数 + 左右内边距，
    * 做到「几个 tab 撑多宽」。所以使用方通常不需要再给导航设宽度。
@@ -309,9 +316,13 @@ const trackOptions = computed(() => {
   }
 })
 
-/* 滑块磨砂白度：始终比轨道更通透（白度更低），这样轨道是一层雾、滑块是一块更清亮的透镜。
-   frost=0 时滑块和轨道都近透明；frost=1 时轨道奶白，滑块仍保留一点通透，不会糊成纯白。 */
-const pillAlpha = computed(() => 0.28 + 0.44 * frostValue.value)
+/* 滑块磨砂白度（静止态）：由 pillAlpha prop 直接控制，夹取到 0.1~0.6（超出无效）。
+   不透明度越低越透；按住时这层磨砂会淡出，交给真玻璃折射（见 frost-layer 样式）。 */
+const pillAlphaVal = computed(() => {
+  const a = Number(props.pillAlpha)
+  // 硬性范围 0.1 ~ 0.6：开发者设再小/再大都会被夹回，不生效
+  return Number.isFinite(a) ? Math.min(0.6, Math.max(0.1, a)) : 0.2
+})
 
 // 按压态胶囊：清澈玻璃 + 折射页面内容。
 // 折射源必须是 'auto'（整页重绘）：这是库唯一能把 tab 图标文字画进取样图的
@@ -348,7 +359,7 @@ const rootStyle = computed(() => ({
   height: `${NAV_HEIGHT}px`,
   '--nav-fg': props.color,
   '--nav-active-fg': props.activeColor,
-  '--pill-a': pillAlpha.value,
+  '--pill-a': pillAlphaVal.value,
   '--press-sx': PRESS_SCALE_X,
   '--press-sy': PRESS_SCALE_Y,
 }))

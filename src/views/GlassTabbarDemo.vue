@@ -56,6 +56,7 @@ function onNavChange(item, value, index) {
       v-model="tab"
       :items="navItems"
       :frost="frost"
+      :pill-alpha="0.2"
       @click="onNavClick"
       @change="onNavChange"
     />
