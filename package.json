@@ -1,6 +1,6 @@
 {
   "name": "diy-vue-liquid-glass",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "iOS 26 Liquid Glass 的 Vue 3 组件封装 —— Tabbar / Switch / 玻璃容器开箱即用，基于 apple-liquid-glass-webgl 的 WebGL2 真实折射",
   "type": "module",
   "license": "MIT",
